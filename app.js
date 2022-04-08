@@ -6,6 +6,7 @@ const {
 } = require("./db");
 const path = require("path");
 
+app.use("/dist", express.static(path.join(__dirname, "dist")));
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 app.post("/api/auth", async (req, res, next) => {
@@ -19,6 +20,15 @@ app.post("/api/auth", async (req, res, next) => {
 app.get("/api/auth", async (req, res, next) => {
   try {
     res.send(await User.byToken(req.headers.authorization));
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.get("/api/purchases", async (req, res, next) => {
+  try {
+    const user = await User.byToken(req.headers.authorization);
+    //res.send
   } catch (ex) {
     next(ex);
   }
