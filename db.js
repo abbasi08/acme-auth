@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 const { STRING } = Sequelize;
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt"); // used for encryping password for login
 
 const config = {
   logging: false,
@@ -17,6 +18,14 @@ const conn = new Sequelize(
 const User = conn.define("user", {
   username: STRING,
   password: STRING,
+});
+
+// add for encrypting password
+User.addHook("beforeSave", async (user) => {
+  if (user.changed("password")) {
+    const hashed = await bcrypt.hash(user.password, 3);
+    user.password = hashed;
+  }
 });
 
 User.byToken = async (token) => {
@@ -40,10 +49,10 @@ User.authenticate = async ({ username, password }) => {
   const user = await User.findOne({
     where: {
       username,
-      password,
     },
   });
-  if (user) {
+  //update authenticate with bcrypt
+  if (user && (await bcrypt.compare(password, user.password))) {
     return jwt.sign({ id: user.id }, process.env.JWT);
   }
   const error = Error("bad credentials");
